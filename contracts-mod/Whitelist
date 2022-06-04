@@ -1,0 +1,58 @@
+// SPDX-License-Identifier: UNLICENSED
+
+pragma solidity ^0.8.0;
+
+contract Whitelist {
+    address public owner;
+    address[] private _whitelisted;
+    mapping(address => bool) _isWhitelisted;
+
+    constructor(){
+        owner = msg.sender;
+    }
+
+    function transferOwnership(address _newOwner) public {
+        require(msg.sender == owner, "owner only");
+        owner = _newOwner;
+    }
+
+    function addToWhitelist(address _user) external {
+        require(_user != address(0), "Cannot be zero address");
+        require(!_isWhitelisted[_user], "User already whitelisted");
+        _isWhitelisted[_user] = true;
+        _whitelisted.push(_user);
+    }
+
+    function getWhitelistedAddresses() external view returns (address[] memory) {
+        return _whitelisted;
+    }
+
+    function removeWhitelistedAddress(address _addressToRemove) external {
+        require(msg.sender == owner);
+        _isWhitelisted[_addressToRemove] = false;
+
+        uint256 length = _whitelisted.length;
+        for(uint256 i = 0; i < length; i++) {
+            if (_addressToRemove == _whitelisted[i]) {
+                if(1 < _whitelisted.length && i < length-1) {
+                    _whitelisted[i] = _whitelisted[length-1];
+                }
+                delete _whitelisted[length-1];
+                _whitelisted.pop();
+
+                break;
+            }
+        }
+    }
+
+    function isWhitelisted(address _user) external view returns (bool) {
+        return _isWhitelisted[_user];
+    }
+
+    //Make sure whitelist data has been stored before calling
+    function destroy() external {
+        require(msg.sender == owner, "owner only");
+        selfdestruct(payable(owner));
+    }
+
+}
